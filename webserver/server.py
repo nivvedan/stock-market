@@ -185,12 +185,16 @@ def index():
 # 
 #     localhost:8111/another/
 #
-# notice that the functio name is another() rather than index()
+# notice that the function name is another() rather than index()
 # the functions for each app.route needs to have different names
 #
-@app.route('/another/', methods=["POST", "GET"])
-def another():
-  return render_template("anotherfile.html")
+# @app.route('/another/', methods=["POST", "GET"])
+# def another():
+#   return render_template("anotherfile.html")
+
+@app.route('/portfolio/<int:pid>/')
+def show_portfolio(pid):
+    return 'Portfolio %d' % pid
 
 if __name__ == "__main__":
   import click
