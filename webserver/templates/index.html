@@ -1,20 +1,32 @@
 <html>
   <style>
-    body{ 
+    body { 
       font-size: 15pt;
       font-family: arial;
+    }
+
+    th {
+      font-weight: bold;
     }
   </style>
 
 
 <body>
-  <h1>Some famous Computer Scientists</h1>
-  <div>{{data}}</div>
+  <h1>Portfolios</h1>
 
   <div>
-    {% for n in data %}
-    <div>{{n}}</div>
+    <table>
+    <tr>
+      <th>ID</th>
+      <th>Name</th>
+    </tr>
+    {% for i in range(0, names|length) %}
+      <tr>
+        <td>{{pids[i]}}</td>
+        <td>{{names[i]}}</td>
+      </tr>
     {% endfor %}
+    </table>
   </div>
 
 </body>

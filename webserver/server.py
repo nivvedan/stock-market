@@ -130,17 +130,20 @@ def index():
   """
 
   # DEBUG: this is debugging code to see what request looks like
-  print(request.args)
+  # print(request.args)
 
 
   #
   # example of a database query
   #
-  cursor = g.conn.execute("SELECT name FROM test")
+  cursor = g.conn.execute("SELECT pid, name FROM portfolio")
+  pids = []
   names = []
   for result in cursor:
-    names.append(result['name'])  # can also be accessed using result[0]
+    names.append(result['name'].strip())  # can also be accessed using result[0]
+    pids.append(result['pid'])  # can also be accessed using result[0]
   cursor.close()
+
 
   #
   # Flask uses Jinja templates, which is an extension to HTML where you can
@@ -168,7 +171,7 @@ def index():
   #     <div>{{n}}</div>
   #     {% endfor %}
   #
-  context = dict( data = names )
+  context = dict(names=names, pids=pids)
 
 
   #
