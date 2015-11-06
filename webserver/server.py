@@ -201,7 +201,7 @@ def show_portfolio(pid):
   if cursor.rowcount == 0:
     return render_template('404.html'), 404
   for result in cursor:
-    portfolio = {'pid': result['name'].strip(), 'name': result['name']}
+    portfolio = {'pid': result['pid'], 'name': result['name'].strip()}
 
   cursor = g.conn.execute("SELECT stock, company_name, quantity, market_price FROM StockHoldings " + \
                           "WHERE portfolio = " + str(pid) + ";")
