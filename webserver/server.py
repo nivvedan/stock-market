@@ -194,7 +194,24 @@ def index():
 
 @app.route('/portfolio/<int:pid>/')
 def show_portfolio(pid):
-    return 'Portfolio %d' % pid
+  if not isinstance(pid, int):
+    return render_template('404.html'), 404
+
+  cursor = g.conn.execute("SELECT stock, company_name, quantity, market_price FROM StockHoldings " + \
+                          "WHERE portfolio = " + str(pid) + ";")
+  stocks = []
+  for result in cursor:
+    stock = {}
+    stock['ticker'] = result['stock']
+    stock['company_name'] = result['company_name']
+    stock['quantity'] = result['quantity']
+    stock['market_price'] = result['market_price']
+    stocks.append(stock)
+  
+  return render_template("portfolio.html", **dict(stocks=stocks))
+
+
+    
 
 if __name__ == "__main__":
   import click
