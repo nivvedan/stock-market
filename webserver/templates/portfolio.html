@@ -1,0 +1,67 @@
+<html>
+  <style>
+    body { 
+      font-size: 15pt;
+      font-family: arial;
+    }
+
+    th {
+      font-weight: bold;
+    }
+  </style>
+
+
+<body>
+  <h1>Portfolio (INSERT PID, NAME HERE) </h1>
+
+  <div>
+    <table>
+    <tr>
+      <th>Stock</th>
+      <th>Quantity</th>
+      <th>Purchase Price</th>
+      <th>Market Price</th>
+    </tr>
+    {% for stock in stocks %}
+      <tr>
+        <td>{{stock['ticker']}}</td>
+        <td>{{stock['company_name']}}</td>
+        <td>{{stock['quantity']}}</td>
+        <td>{{stock['market_price']}}</td>
+      </tr>
+    {% endfor %}
+    </table>
+  </div>
+
+  <div>
+    <form action="action_page.php" method="post">
+      <input type="radio" name="order" value="market">Buy
+      <input type="radio" name="order" value="custom">Sell
+      <br>
+      Username:<br>
+      <input type="text" name="username">
+      <br>
+      Password:<br>
+      <input type="text" name="password">
+      <br>
+      Stock Ticker:<br>
+      <input type="text" name="ticker">
+      <br>
+      Quantity:<br>
+      <input type="text" name="quantity">
+      <br>
+      Price: <br>
+      <input type="radio" name="price" value="market">Market Price
+      <br>
+      <input type="radio" name="price" value="custom">Custom Price
+      <br>
+      Enter custom price: 
+      <input type="text" name="cprice">
+      <br>
+      <input type="submit" value="Submit">
+    </form>
+  </div>
+</body>
+
+
+</html>
