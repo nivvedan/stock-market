@@ -24,7 +24,7 @@
     </tr>
     {% for stock in stocks %}
       <tr>
-        <td>{{stock['ticker']}}</td>
+        <td><a href="/stock/{{stock['ticker']}}"}}>{{stock['ticker']}}</a></td>
         <td>{{stock['company_name']}}</td>
         <td>{{stock['quantity']}}</td>
         <td>{{stock['market_price']}}</td>
