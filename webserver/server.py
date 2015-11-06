@@ -197,6 +197,12 @@ def show_portfolio(pid):
   if not isinstance(pid, int):
     return render_template('404.html'), 404
 
+  cursor = g.conn.execute("SELECT pid, name FROM portfolio WHERE pid = " + str(pid) + ";")
+  if cursor.rowcount == 0:
+    return render_template('404.html'), 404
+  for result in cursor:
+    portfolio = {'pid': result['name'].strip(), 'name': result['name']}
+
   cursor = g.conn.execute("SELECT stock, company_name, quantity, market_price FROM StockHoldings " + \
                           "WHERE portfolio = " + str(pid) + ";")
   stocks = []
@@ -208,7 +214,7 @@ def show_portfolio(pid):
     stock['market_price'] = result['market_price']
     stocks.append(stock)
   
-  return render_template("portfolio.html", **dict(stocks=stocks))
+  return render_template("portfolio.html", **dict(stocks=stocks, portfolio=portfolio))
 
 
     
