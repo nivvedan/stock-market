@@ -274,6 +274,23 @@ def show_stock(ticker):
   return render_template("stock.html", **dict(stock=stock, buyorders=buyorders,
                                               sellorders=sellorders))
 
+def process_orders(ticker):
+  cursor_sell = g.conn.execute("SELECT pid, quantity, unit_price FROM Trade_Order WHERE stock = %s AND type = SELL ORDER BY price ASC;", ticker)
+  cursor_buy = g.conn.execute("SELECT pid, quantity, unit_price FROM Trade_Order WHERE stock = %s AND type = BUY ORDER BY price DESC;", ticker)
+  if cursor_sell.rowcount == 0 or cursor_buy == 0:
+    return True
+
+  for buy_order in cursor_buy:
+    for sell_order in cursor_sell:
+      if buy_order['unit_price'] >= sell_order['unit_price']:
+        qty_diff = buy_order['quantity'] - sell_order['quantity'] 
+        if qty_diff == 0:
+          g.conn.execute("DELETE FROM Trade_Order WHERE pid = %s and quantity = %s and unit_price = %s and type = SELL;", sell_order['pid'], sell_order['quantity'], sell_order['unit_price'])
+          g.conn.execute("DELETE FROM Trade_Order WHERE pid = %s and quantity = %s and unit_price = %s and type = BUY;", buy_order['pid'], buy_order['quantity'], buy_order['unit_price'])
+        else if qty_diff > 0:  #buy order quantity is more
+          g.conn.execute("DELETE FROM Trade_Order WHERE pid = %s and quantity = %s and unit_price = %s and type = SELL;", sell_order['pid'], sell_order['quantity'], sell_order['unit_price'])
+          g.conn.execute("UPDATE FROM Trade_Order SET quantity = %s - %s WHERE pid = %s and quantity = %s and unit_price = %s and type = BUY;", buy_order['quantity'], qty_diff, buy_order['pid'], buy_order['quantity'], buy_order['unit_price'])
+             
 
 if __name__ == "__main__":
   import click
