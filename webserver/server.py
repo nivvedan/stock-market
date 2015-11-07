@@ -18,6 +18,8 @@ eugene wu 2015
 """
 
 import os
+
+from datetime import datetime
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
 from flask import Flask, request, render_template, g, redirect, Response
@@ -225,6 +227,43 @@ def show_portfolio(pid):
   if cursor.rowcount == 0:
     errors.append("No such Stock Ticker exists in the database.")
     return display_stocks(pid, portfolio, errors)
+
+  quantity = request.form['quantity'].strip()
+  try:
+    quantity = int(quantity)
+  except:
+    errors.append("Quantity should be an integer.")
+    return display_stocks(pid, portfolio, errors)
+  if quantity <= 0:
+    errors.append("Quantity should be a positive integer.")
+    return display_stocks(pid, portfolio, errors)
+
+  cprice = request.form['cprice'].strip()
+  if not cprice and request.form['price'] == 'custom':
+    errors.append("Custom price selected but not specified.")
+    return display_stocks(pid, portfolio, errors)
+  
+  if request.form['price'] == 'custom':
+    try:
+      cprice = float(cprice)
+    except:
+      errors.append("Custom price should be a number.")
+      return display_stocks(pid, portfolio, errors)
+    if cprice < 0:
+      errors.append("Custom price cannot be negative.")
+      return display_stocks(pid, portfolio, errors)
+  else:
+    cprice = None
+
+  try:
+    cursor = g.conn.execute("INSERT INTO Trade_Order(type, stock, market, unit_price, quantity, " + \
+                            "trader, portfolio, timestamp) VALUES(%s, %s, %s, %s, %s, %s, %s, %s);",
+                            request.form['order'], ticker, request.form['price'] == 'market', cprice,
+                            quantity, username, pid, datetime.now())
+    # process_orders(ticker)
+  except:
+    errors.append("Invalid Order.")
+    return display_stocks(pid, portfolio, errors) 
 
   return display_stocks(pid, portfolio, errors)
 
