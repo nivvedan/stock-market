@@ -192,19 +192,19 @@ def index():
 # def another():
 #   return render_template("anotherfile.html")
 
-@app.route('/portfolio/<int:pid>/')
+@app.route('/portfolio/<int:pid>/', methods=['GET'])
 def show_portfolio(pid):
   if not isinstance(pid, int):
     return render_template('404.html'), 404
 
-  cursor = g.conn.execute("SELECT pid, name FROM portfolio WHERE pid = " + str(pid) + ";")
+  cursor = g.conn.execute("SELECT pid, name FROM portfolio WHERE pid = %s;", pid)
   if cursor.rowcount == 0:
     return render_template('404.html'), 404
   for result in cursor:
     portfolio = {'pid': result['pid'], 'name': result['name'].strip()}
 
   cursor = g.conn.execute("SELECT stock, company_name, quantity, market_price FROM StockHoldings " + \
-                          "WHERE portfolio = " + str(pid) + ";")
+                          "WHERE portfolio = %s;", pid)
   stocks = []
   for result in cursor:
     stock = {}
@@ -216,8 +216,37 @@ def show_portfolio(pid):
   
   return render_template("portfolio.html", **dict(stocks=stocks, portfolio=portfolio))
 
+@app.route('/stock/<ticker>/')
+def show_stock(ticker):
+  if not isinstance(ticker, str):
+    return render_template('404.html'), 404
 
-    
+  cursor = g.conn.execute("SELECT ticker, company_name FROM Stock WHERE ticker = %s;", ticker)
+  if cursor.rowcount == 0:
+    return render_template('404.html'), 404
+  for result in cursor:
+    stock = {'stock': result['ticker'].strip(), 'company_name': result['company_name'].strip()}
+
+  cursor = g.conn.execute("SELECT type, unit_price, quantity, portfolio FROM Trade_Order " + \
+                          "WHERE stock = %s AND market = False;", ticker)
+  buyorders = []
+  sellorders = []
+  for result in cursor:
+    order = {}
+    order['unit_price'] = result['unit_price']
+    order['quantity'] = result['quantity']
+    order['pid'] = result['portfolio']
+    if result['type'].strip().lower() == 'buy':
+      buyorders.append(order)
+    else:
+      sellorders.append(order)
+
+  buyorders.sort(key=lambda order: order['unit_price'], reverse=True)
+  sellorders.sort(key=lambda order: order['unit_price'])
+  
+  return render_template("stock.html", **dict(stock=stock, buyorders=buyorders,
+                                              sellorders=sellorders))
+
 
 if __name__ == "__main__":
   import click
