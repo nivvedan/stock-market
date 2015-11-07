@@ -1,0 +1,52 @@
+<html>
+  <style>
+    body { 
+      font-size: 15pt;
+      font-family: arial;
+    }
+
+    th {
+      font-weight: bold;
+    }
+  </style>
+
+<body>
+  <h1>Order book of {{stock['company_name']}} ({{stock['ticker']}})</h1>
+
+  <div>
+    <table>
+    <tr>
+      <th>Buy Orders</th>
+      <th>Sell Orders</th>
+    </tr>
+    <tr>
+      <td>
+        <table>
+        {% for order in buyorders %}
+          <tr>
+            <td>{{order['pid']}}</td>
+            <td>{{order['quantity']}}</td>
+            <td>{{order['unit_price']}}</td>
+          <tr>
+        {% endfor %}
+        </table>  
+      </td>
+      <td>
+        <table>
+        {% for order in sellorders %}
+          <tr>
+            <td>{{order['pid']}}</td>
+            <td>{{order['quantity']}}</td>
+            <td>{{order['unit_price']}}</td>
+          <tr>
+        {% endfor %}
+        </table>  
+      </td>
+    </tr>
+    </table>
+  </div>
+
+</body>
+
+
+</html>
