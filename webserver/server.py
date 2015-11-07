@@ -192,7 +192,7 @@ def index():
 # def another():
 #   return render_template("anotherfile.html")
 
-@app.route('/portfolio/<int:pid>/', methods=['GET'])
+@app.route('/portfolio/<int:pid>/', methods=['GET', 'POST'])
 def show_portfolio(pid):
   if not isinstance(pid, int):
     return render_template('404.html'), 404
@@ -203,6 +203,28 @@ def show_portfolio(pid):
   for result in cursor:
     portfolio = {'pid': result['pid'], 'name': result['name'].strip()}
 
+  errors = []
+
+  if request.method != "POST":
+    return display_stocks(pid, portfolio, errors)
+
+  username = request.form['username'].strip()
+  password = request.form['password']
+  cursor = g.conn.execute("SELECT username FROM Trader WHERE username = %s AND password = %s;", username, password)
+  if cursor.rowcount == 0:
+    errors.append("Username or password incorrect.")
+    return display_stocks(pid, portfolio, errors)
+  
+  ticker = request.form['ticker'].strip()
+  cursor = g.conn.execute("SELECT ticker FROM Stock WHERE ticker = %s;", ticker)
+  if cursor.rowcount == 0:
+    errors.append("No such Stock Ticker exists in the database.")
+    return display_stocks(pid, portfolio, errors)
+
+  return display_stocks(pid, portfolio, errors)
+
+
+def display_stocks(pid, portfolio, errors):
   cursor = g.conn.execute("SELECT stock, company_name, quantity, market_price FROM StockHoldings " + \
                           "WHERE portfolio = %s;", pid)
   stocks = []
@@ -214,7 +236,7 @@ def show_portfolio(pid):
     stock['market_price'] = result['market_price']
     stocks.append(stock)
   
-  return render_template("portfolio.html", **dict(stocks=stocks, portfolio=portfolio))
+  return render_template("portfolio.html", **dict(stocks=stocks, portfolio=portfolio, errors=errors))
 
 @app.route('/stock/<ticker>/')
 def show_stock(ticker):
