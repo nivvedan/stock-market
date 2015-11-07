@@ -208,7 +208,7 @@ def show_portfolio(pid):
   stocks = []
   for result in cursor:
     stock = {}
-    stock['ticker'] = result['stock']
+    stock['ticker'] = result['stock'].strip()
     stock['company_name'] = result['company_name']
     stock['quantity'] = result['quantity']
     stock['market_price'] = result['market_price']
