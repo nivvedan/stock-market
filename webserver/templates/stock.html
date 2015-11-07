@@ -43,6 +43,11 @@
     <tr>
       <td>
         <table id = "t01">
+          <tr>
+            <th>pid</th>
+            <th>quantity</th>
+            <th>unit price</th>
+          </tr>
         {% for order in buyorders %}
           <tr>
             <td>{{order['pid']}}</td>
