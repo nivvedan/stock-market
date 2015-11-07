@@ -240,7 +240,7 @@ def display_stocks(pid, portfolio, errors):
 
 @app.route('/stock/<ticker>/')
 def show_stock(ticker):
-  if not isinstance(ticker, str):
+  if not isinstance(ticker, str) and not isinstance(ticker, unicode):
     return render_template('404.html'), 404
 
   cursor = g.conn.execute("SELECT ticker, company_name FROM Stock WHERE ticker = %s;", ticker)
