@@ -214,6 +214,11 @@ def show_portfolio(pid):
   if cursor.rowcount == 0:
     errors.append("Username or password incorrect.")
     return display_stocks(pid, portfolio, errors)
+
+  cursor = g.conn.execute("SELECT portfolio FROM Trader_Manages WHERE trader = %s AND portfolio = %s;", username, pid)
+  if cursor.rowcount == 0:
+    errors.append("Trader not authorized for this Portfolio.")
+    return display_stocks(pid, portfolio, errors)
   
   ticker = request.form['ticker'].strip()
   cursor = g.conn.execute("SELECT ticker FROM Stock WHERE ticker = %s;", ticker)
