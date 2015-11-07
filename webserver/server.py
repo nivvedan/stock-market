@@ -324,12 +324,20 @@ def process_orders(ticker):
       if buy_order['unit_price'] >= sell_order['unit_price']:
         qty_diff = buy_order['quantity'] - sell_order['quantity'] 
         if qty_diff == 0:
-          g.conn.execute("DELETE FROM Trade_Order WHERE pid = %s and quantity = %s and unit_price = %s and type = SELL;", sell_order['pid'], sell_order['quantity'], sell_order['unit_price'])
-          g.conn.execute("DELETE FROM Trade_Order WHERE pid = %s and quantity = %s and unit_price = %s and type = BUY;", buy_order['pid'], buy_order['quantity'], buy_order['unit_price'])
+          g.conn.execute("DELETE FROM Trade_Order WHERE pid = %s and quantity = %s and unit_price = %s and type = SELL;",
+                            sell_order['pid'], sell_order['quantity'], sell_order['unit_price'])
+          g.conn.execute("DELETE FROM Trade_Order WHERE pid = %s and quantity = %s and unit_price = %s and type = BUY;",
+                            buy_order['pid'], buy_order['quantity'], buy_order['unit_price'])
         else if qty_diff > 0:  #buy order quantity is more
-          g.conn.execute("DELETE FROM Trade_Order WHERE pid = %s and quantity = %s and unit_price = %s and type = SELL;", sell_order['pid'], sell_order['quantity'], sell_order['unit_price'])
+          g.conn.execute("DELETE FROM Trade_Order WHERE pid = %s and quantity = %s and unit_price = %s and type = SELL;", 
+                            sell_order['pid'], sell_order['quantity'], sell_order['unit_price'])
           g.conn.execute("UPDATE FROM Trade_Order SET quantity = %s - %s WHERE pid = %s and quantity = %s and unit_price = %s and type = BUY;", buy_order['quantity'], qty_diff, buy_order['pid'], buy_order['quantity'], buy_order['unit_price'])
-             
+        else:  #buy order quantity is less
+          g.conn.execute("UPDATE FROM Trade_Order SET quantity = %s + %s WHERE pid = %s and quantity = %s and unit_price = %s and type = SELL;", sell_order['quantity'], qty_diff, sell_order['pid'], sell_order['quantity'], sell_order['unit_price'])     
+          g.conn.execute("DELETE FROM Trade_Order WHERE pid = %s and quantity = %s and unit_price = %s and type = BUY;", 
+                            buy_order['pid'], buy_order['quantity'], buy_order['unit_price'])
+
+          ## TODO update portfolio, transaction
 
 if __name__ == "__main__":
   import click
