@@ -19,7 +19,6 @@ Nivvedan Senthamil Selvan
 """
 
 import os
-import marketorders
 
 from datetime import datetime
 from sqlalchemy import *
@@ -271,16 +270,12 @@ def show_stock(ticker):
 
 def process_orders(ticker):
 
-  # Market orders
-  cursor_buy_mt = g.conn.execute("SELECT id, trader, portfolio unit_price," + \
-                                  "quantity FROM Trade_Order WHERE stock =" + \
-                                  " %s AND type = BUY AND market = TRUE " + \
-                                  "ORDER BY price DESC;", ticker)
-  cursor_sell_mt = g.conn.execute("SELECT id, trader, portfolio unit_price," + \
-                                  "quantity FROM Trade_Order WHERE stock =" + \
-                                  " %s AND type = SELL AND market = TRUE " + \
-                                  "ORDER BY price ASC;", ticker)
-  
+  cursor_buy_mt = select_market_orders(ticker, "BUY")
+  cursor_sell_mt = select_market_orders(ticker, "SELL")
+
+  cursor_buy = select_price_orders(ticker, "BUY")
+  cursor_sell = select_price_orders(ticker, "SELL")
+
   if cursor_buy_mt.rowcount != 0:
     exec_buy_mt(ticker, cursor_buy_mt, cursor_sell)
   if cursor_sell_mt.rowcount != 0:
@@ -288,12 +283,32 @@ def process_orders(ticker):
 
   exec_price_orders(ticker)
 
+def select_market_orders(ticker, otype):
+  if otype == "BUY":
+    ordering = "DESC"
+  else:
+    ordering = "ASC"
+  return g.conn.execute("SELECT id, trader, portfolio, unit_price," + \
+                        "quantity FROM Trade_Order WHERE stock =" + \
+                        " %s AND type = %s AND market = TRUE " + \
+                        "ORDER BY unit_price %s;", ticker, otype, ordering)
+
+def select_price_orders(ticker, otype):
+  if otype == "BUY":
+    ordering = "DESC"
+  else:
+    ordering = "ASC"
+  return g.conn.execute("SELECT id, trader, portfolio, unit_price," + \
+                        "quantity FROM Trade_Order WHERE stock =" + \
+                        " %s AND type = %s AND market = FALSE ORDER BY " + \
+                        "unit_price %s;", ticker, otype, ordering)
 
 def exec_buy_mt(ticker, cursor_buy_mt, cursor_sell):
 
   for buy_order in cursor_buy_mt:
+    print(buy_order)
     buy_id = buy_order['id']
-    buy_user = buy_order['trader']
+    buy_user = buy_order['trader'].strip()
     buy_pid = buy_order['portfolio']
     buy_price = buy_order['unit_price']
     buy_qty = buy_order['quantity']
@@ -303,10 +318,7 @@ def exec_buy_mt(ticker, cursor_buy_mt, cursor_sell):
     return
 
   for sell_order in cursor_sell:
-    cursor_buy_mt = g.conn.execute("SELECT id, trader, portfolio unit_price," + \
-                                    "quantity FROM Trade_Order WHERE stock =" + \
-                                    " %s AND type = BUY AND market = TRUE " + \
-                                    "ORDER BY price DESC;", ticker)
+    cursor_buy_mt = select_market_orders(ticker, "BUY")
     if cursor_buy_mt.rowcount == 0:
       return
 
@@ -375,10 +387,7 @@ def exec_sell_mt(ticker, cursor_sell_mt, cursor_buy):
     return
 
   for buy_order in cursor_buy:
-    cursor_sell_mt = g.conn.execute("SELECT id, trader, portfolio unit_price," + \
-                                    "quantity FROM Trade_Order WHERE stock =" + \
-                                    " %s AND type = SELL AND market = TRUE " + \
-                                    "ORDER BY price ASC;", ticker)
+    cursor_sell_mt = select_market_orders(ticker, "SELL")
     if cursor_sell_mt.rowcount == 0:
       return
 
@@ -434,14 +443,9 @@ def exec_sell_mt(ticker, cursor_sell_mt, cursor_buy):
 
 def exec_price_orders(ticker):
   while True:
-    cursor_buy = g.conn.execute("SELECT id, trader, portfolio unit_price," + \
-                                "quantity FROM Trade_Order WHERE stock =" + \
-                                " %s AND type = BUY ORDER BY price DESC;",
-                                ticker)
-    cursor_sell = g.conn.execute("SELECT id, trader, portfolio unit_price," + \
-                                  "quantity FROM Trade_Order WHERE stock =" + \
-                                  " %s AND type = SELL ORDER BY price ASC;",
-                                  ticker)
+    cursor_buy = select_price_orders(ticker, "BUY")
+    cursor_sell = select_price_orders(ticker, "SELL")
+
     if cursor_buy.rowcount == 0 or cursor_sell.rowcount == 0:
       return
 
