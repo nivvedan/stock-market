@@ -23,6 +23,7 @@ from datetime import datetime
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
 from flask import Flask, request, render_template, g, redirect, Response
+import marketorders
 
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, template_folder=tmpl_dir)
@@ -314,13 +315,20 @@ def show_stock(ticker):
                                               sellorders=sellorders))
 
 def process_orders(ticker):
+  # market orders
+  cursor_sell_mt = g.conn.execute("SELECT pid, quantity, unit_price FROM Trade_Order WHERE stock = %s AND type = SELL AND market = TRUE ORDER BY price ASC;", ticker)
+  cursor_buy_mt = g.conn.execute("SELECT pid, quantity, unit_price FROM Trade_Order WHERE stock = %s AND type = BUY AND market = TRUE ORDER BY price DESC;", ticker)
+  # normal orders
   cursor_sell = g.conn.execute("SELECT pid, quantity, unit_price FROM Trade_Order WHERE stock = %s AND type = SELL ORDER BY price ASC;", ticker)
   cursor_buy = g.conn.execute("SELECT pid, quantity, unit_price FROM Trade_Order WHERE stock = %s AND type = BUY ORDER BY price DESC;", ticker)
+  
+  if cursor_sell_mt.rowcount != 0 and cursor_buy.rowcount != 0:
+    exec_sell_mt(cursor_sell_mt, cursor_buy)
+  elif cursor_buy_mt.rowcount != 0 and cursor_sell.rowcount != 0:
+    exec_sell_mt(cursor_buy_mt, cursor_sell)
+  
   if cursor_sell.rowcount == 0 or cursor_buy.rowcount == 0:
-    # If there is any markey order, remove it
     return True
-
-  # Code for executing market order, if exists
 
   for buy_order in cursor_buy:
     for sell_order in cursor_sell:
