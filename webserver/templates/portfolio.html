@@ -67,6 +67,13 @@
       {% endfor %}
       </table>
     </div>
+    
+    <div>
+      {% if errors|length == 0 %}
+        <h4 style="color:green"> Trade Order successully entered </h4>
+      {% endif %}
+
+    </div>
 
     <div>
       <h3>Execute Trade</he>
@@ -78,7 +85,6 @@
       {% endfor %}
 
     </div>
-    
 
     <div id="formdiv">
       <form action="" method="post">
