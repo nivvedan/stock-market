@@ -21,7 +21,7 @@ def exec_buy_mt(ticker, cursor_buy_mt, cursor_sell):
 	buy_user = ''
 	for buy_order in cursor_buy_mt:
 		buy_id = buy_order['id']
-		buy_user = buy_order['uid']
+		buy_user = buy_order['trader']
 		buy_pid = buy_order['portfolio']
 		buy_price = buy_order['unit_price']
 		buy_qty = buy_order['quantity']
@@ -34,7 +34,7 @@ def exec_buy_mt(ticker, cursor_buy_mt, cursor_sell):
 	sell_user = ''
 	for sell_order in cursor_sell:
 		sell_id = sell_order['id']
-		sell_user = sell_order['uid']
+		sell_user = sell_order['trader']
 		sell_pid = sell_order['portfolio']
 		sell_price = buy_order['unit_price']
 		sell_qty = buy_order['quantity']
@@ -51,10 +51,10 @@ def exec_buy_mt(ticker, cursor_buy_mt, cursor_sell):
 	if qty_diff >= 0:
 		g.conn.execute("INSERT INTO Transaction VALUES (%s,%s,%s,%s,%s,%s,%s,%s);",
 																										max_tid + 1, sell_qty, sell_price * sell_qty, buy_user,
-																										buy_pid, ticker, 'BUY', buy_order['timestamp'])
+																										buy_pid, ticker, 'BUY', datetime.now())
 		g.conn.execute("INSERT INTO Transaction VALUES (%s,%s,%s,%s,%s,%s,%s,%s);",
 																										max_tid + 2, sell_qty, sell_price * sell_qty, sell_user,
-																										sell_pid, ticker, 'SELL', buy_order['timestamp'])
+																										sell_pid, ticker, 'SELL', datetime.now())
 
 		# UPDATING BUY PORTFOLIO check if stock already exists in Portfolio_Stock
 		cursor_stocks = g.conn.execute("SELECT * FROM Portfolio_Stock WHERE portfolio = %s and ticker = %s;", buy_pid, ticker)
@@ -80,10 +80,10 @@ def exec_buy_mt(ticker, cursor_buy_mt, cursor_sell):
 	else:  # sell quantity is more 
 		g.conn.execute("INSERT INTO Transaction VALUES (%s,%s,%s,%s,%s,%s,%s,%s);",
 																										max_tid + 1, buy_qty, sell_price * buy_qty, buy_user,
-																										buy_pid, ticker, 'BUY', buy_order['timestamp'])
+																										buy_pid, ticker, 'BUY', datetime.now())
 		g.conn.execute("INSERT INTO Transaction VALUES (%s,%s,%s,%s,%s,%s,%s,%s);",
 																										max_tid + 2, buy_qty, sell_price * buy_qty, sell_user,
-																										sell_pid, ticker, 'SELL', buy_order['timestamp'])
+																										sell_pid, ticker, 'SELL', datetime.now())
 	
 		# UPDATING BUY PORTFOLIO check if stock already exists in Portfolio_Stock
 		cursor_stocks = g.conn.execute("SELECT * FROM Portfolio_Stock WHERE portfolio = %s and ticker = %s;", buy_pid, ticker)
