@@ -257,16 +257,52 @@ def show_portfolio(pid):
     cprice = None
 
   try:
-    cursor = g.conn.execute("INSERT INTO Trade_Order(type, stock, market, unit_price, quantity, " + \
-                            "trader, portfolio, timestamp) VALUES(%s, %s, %s, %s, %s, %s, %s, %s);",
-                            request.form['order'], ticker, request.form['price'] == 'market', cprice,
-                            quantity, username, pid, datetime.now())
-    # process_orders(ticker)
+    if not check_assets(pid, request.form['order'], ticker,
+                        request.form['price'] == 'market', cprice, quantity):
+      errors.append("You don't have sufficient funds / stocks to execute " + \
+                    "this order.")
+      return display_stocks(pid, portfolio, errors)
+
+    cursor = g.conn.execute("INSERT INTO Trade_Order(type, stock, market, " + \
+                            "unit_price, quantity, trader, portfolio, " + \
+                            "timestamp) VALUES(%s, %s, %s, %s, %s, %s, %s, " + \
+                            "%s);", request.form['order'], ticker,
+                            request.form['price'] == 'market', cprice, quantity,
+                            username, pid, datetime.now())
+    process_orders(ticker)
   except:
     errors.append("Invalid Order.")
     return display_stocks(pid, portfolio, errors) 
 
   return display_stocks(pid, portfolio, errors)
+
+def check_assets(pid, order, ticker, market, cprice, quantity):
+  if order == "BUY":
+    if market:
+      cursor = g.conn.execute("SELECT market_price FROM Stock WHERE ticker" + \
+                              " = %s", ticker)
+      for result in cursor:
+        mp = float(result['market_price'][1:])
+        fundsneeded = mp * quantity
+    else:
+      fundsneeded = cprice * quantity
+    cursor = g.conn.execute("SELECT cash FROM Portfolio WHERE pid = %s", pid)
+    for result in cursor:
+      cashavailable = float(result['cash'].replace(',', "")[1:])
+      if cashavailable < fundsneeded:
+        return False
+
+  elif order == "SELL":
+    cursor = g.conn.execute("SELECT quantity FROM Portfolio_Stock WHERE " + \
+                            "portfolio = %s AND stock = %s", pid, ticker)
+    if cursor.rowcount == 0:
+      return False
+    for result in cursor:
+      qtyavailable = int(result['quantity'])
+      if qtyavailable < quantity:
+        return False
+
+  return True   
 
 
 def display_stocks(pid, portfolio, errors):
@@ -339,7 +375,7 @@ def process_orders(ticker):
                             sell_order['pid'], sell_order['quantity'], sell_order['unit_price'])
           g.conn.execute("DELETE FROM Trade_Order WHERE pid = %s and quantity = %s and unit_price = %s and type = BUY;",
                             buy_order['pid'], buy_order['quantity'], buy_order['unit_price'])
-        else if qty_diff > 0:  #buy order quantity is more
+        elif qty_diff > 0:  #buy order quantity is more
           g.conn.execute("DELETE FROM Trade_Order WHERE pid = %s and quantity = %s and unit_price = %s and type = SELL;", 
                             sell_order['pid'], sell_order['quantity'], sell_order['unit_price'])
           g.conn.execute("UPDATE FROM Trade_Order SET quantity = %s - %s WHERE pid = %s and quantity = %s and unit_price = %s and type = BUY;", buy_order['quantity'], qty_diff, buy_order['pid'], buy_order['quantity'], buy_order['unit_price'])
