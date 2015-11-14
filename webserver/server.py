@@ -291,7 +291,7 @@ def select_market_orders(ticker, otype):
   return g.conn.execute("SELECT id, trader, portfolio, unit_price," + \
                         "quantity FROM Trade_Order WHERE stock =" + \
                         " %s AND type = %s AND market = TRUE " + \
-                        "ORDER BY unit_price %s;", ticker, otype, ordering)
+                        "ORDER BY unit_price " + ordering + ";", ticker, otype)
 
 def select_price_orders(ticker, otype):
   if otype == "BUY":
@@ -301,12 +301,11 @@ def select_price_orders(ticker, otype):
   return g.conn.execute("SELECT id, trader, portfolio, unit_price," + \
                         "quantity FROM Trade_Order WHERE stock =" + \
                         " %s AND type = %s AND market = FALSE ORDER BY " + \
-                        "unit_price %s;", ticker, otype, ordering)
+                        "unit_price " + ordering + ";", ticker, otype)
 
 def exec_buy_mt(ticker, cursor_buy_mt, cursor_sell):
 
   for buy_order in cursor_buy_mt:
-    print(buy_order)
     buy_id = buy_order['id']
     buy_user = buy_order['trader'].strip()
     buy_pid = buy_order['portfolio']
@@ -323,7 +322,7 @@ def exec_buy_mt(ticker, cursor_buy_mt, cursor_sell):
       return
 
     sell_id = sell_order['id']
-    sell_user = sell_order['trader']
+    sell_user = sell_order['trader'].strip()
     sell_pid = sell_order['portfolio']
     sell_price = sell_order['unit_price']
     sell_qty = sell_order['quantity']
@@ -377,7 +376,7 @@ def exec_sell_mt(ticker, cursor_sell_mt, cursor_buy):
 
   for sell_order in cursor_sell_mt:
     sell_id = sell_order['id']
-    sell_user = sell_order['trader']
+    sell_user = sell_order['trader'].strip()
     sell_pid = sell_order['portfolio']
     sell_price = sell_order['unit_price']
     sell_qty = sell_order['quantity']
@@ -392,7 +391,7 @@ def exec_sell_mt(ticker, cursor_sell_mt, cursor_buy):
       return
 
     buy_id = buy_order['id']
-    buy_user = buy_order['trader']
+    buy_user = buy_order['trader'].strip()
     buy_pid = buy_order['portfolio']
     buy_price = buy_order['unit_price']
     buy_qty = buy_order['quantity']
@@ -451,7 +450,7 @@ def exec_price_orders(ticker):
 
     for buy_order in cursor_buy:
       buy_id = buy_order['id']
-      buy_user = buy_order['trader']
+      buy_user = buy_order['trader'].strip()
       buy_pid = buy_order['portfolio']
       buy_price = buy_order['unit_price']
       buy_qty = buy_order['quantity']
@@ -459,7 +458,7 @@ def exec_price_orders(ticker):
 
     for sell_order in cursor_sell:
       sell_id = sell_order['id']
-      sell_user = sell_order['trader']
+      sell_user = sell_order['trader'].strip()
       sell_pid = sell_order['portfolio']
       sell_price = sell_order['unit_price']
       sell_qty = sell_order['quantity']
