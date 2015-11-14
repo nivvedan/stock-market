@@ -40,8 +40,7 @@ def exec_buy_mt(cursor_buy_mt, cursor_sell):
 	if qty_diff >= 0:
 		g.conn.execute("INSERT INTO Portfolio_Stock VALUES pid = %s;", sell_order['pid'], )
 	else:
-
-
+		pass
 	g.conn.execute("DELETE FROM Trade_Order WHERE id = %s;", buy_id)
 
 
