@@ -38,6 +38,10 @@
       #backfooter {
         margin-top: 20px;
       }
+
+      .pricecell {
+        text-align: right;
+      }
       
     </style>
   </head>
@@ -58,7 +62,7 @@
           <td><a href="/stock/{{stock['ticker']}}/"}}>{{stock['ticker']}}</a></td>
           <td>{{stock['company_name']}}</td>
           <td>{{stock['quantity']}}</td>
-          <td>{{stock['market_price']}}</td>
+          <td class="pricecell">{{stock['market_price']}}</td>
         </tr>
       {% endfor %}
       </table>

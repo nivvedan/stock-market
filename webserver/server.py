@@ -270,17 +270,31 @@ def show_stock(ticker):
                                               sellorders=sellorders))
 
 def process_orders(ticker):
-  # market orders
-  cursor_sell_mt = g.conn.execute("SELECT * FROM Trade_Order WHERE stock = %s AND type = SELL AND market = TRUE ORDER BY price ASC;", ticker)
-  cursor_buy_mt = g.conn.execute("SELECT * FROM Trade_Order WHERE stock = %s AND type = BUY AND market = TRUE ORDER BY price DESC;", ticker)
-  # normal orders
-  cursor_sell = g.conn.execute("SELECT * FROM Trade_Order WHERE stock = %s AND type = SELL ORDER BY price ASC;", ticker)
-  cursor_buy = g.conn.execute("SELECT * FROM Trade_Order WHERE stock = %s AND type = BUY ORDER BY price DESC;", ticker)
+
+  # Market orders
+  cursor_buy_mt = g.conn.execute("SELECT id, trader, portfolio unit_price," + \
+                                  "quantity FROM Trade_Order WHERE stock =" + \
+                                  " %s AND type = BUY AND market = TRUE " + \
+                                  "ORDER BY price DESC;", ticker)
+  cursor_sell_mt = g.conn.execute("SELECT id, trader, portfolio unit_price," + \
+                                  "quantity FROM Trade_Order WHERE stock =" + \
+                                  " %s AND type = SELL AND market = TRUE " + \
+                                  "ORDER BY price ASC;", ticker)
   
-  if cursor_sell_mt.rowcount != 0 and cursor_buy.rowcount != 0:
-    exec_sell_mt(ticker, cursor_sell_mt, cursor_buy)
-  elif cursor_buy_mt.rowcount != 0 and cursor_sell.rowcount != 0:
+  # Price orders
+  cursor_buy = g.conn.execute("SELECT id, trader, portfolio unit_price," + \
+                                  "quantity FROM Trade_Order WHERE stock =" + \
+                                  " %s AND type = BUY AND market = FALSE " + \
+                                  "ORDER BY price DESC;", ticker)
+  cursor_sell = g.conn.execute("SELECT id, trader, portfolio unit_price," + \
+                                  "quantity FROM Trade_Order WHERE stock =" + \
+                                  " %s AND type = SELL AND market = FALSE " + \
+                                  "ORDER BY price ASC;", ticker)
+  
+  if cursor_buy_mt.rowcount != 0:
     exec_buy_mt(ticker, cursor_buy_mt, cursor_sell)
+  if cursor_sell_mt.rowcount != 0:
+    exec_sell_mt(ticker, cursor_sell_mt, cursor_buy)
   
   if cursor_sell.rowcount == 0 or cursor_buy.rowcount == 0:
     return True
@@ -304,6 +318,115 @@ def process_orders(ticker):
                             buy_order['pid'], buy_order['quantity'], buy_order['unit_price'])
 
           ## TODO update portfolio, transaction
+
+def exec_buy_mt(ticker, cursor_buy_mt, cursor_sell):
+
+  for buy_order in cursor_buy_mt:
+    buy_id = buy_order['id']
+    buy_user = buy_order['trader']
+    buy_pid = buy_order['portfolio']
+    buy_price = buy_order['unit_price']
+    buy_qty = buy_order['quantity']
+
+  if cursor_sell.rowcount == 0:
+    delete_market_orders(ticker, "BUY")
+    return
+
+  for sell_order in cursor_sell:
+    cursor_buy_mt = g.conn.execute("SELECT id, trader, portfolio unit_price," + \
+                                    "quantity FROM Trade_Order WHERE stock =" + \
+                                    " %s AND type = BUY AND market = TRUE " + \
+                                    "ORDER BY price DESC;", ticker)
+    if cursor_buy_mt.rowcount == 0:
+      return
+
+    sell_id = sell_order['id']
+    sell_user = sell_order['trader']
+    sell_pid = sell_order['portfolio']
+    sell_price = sell_order['unit_price']
+    sell_qty = sell_order['quantity']
+
+    if not check_assets(sell_pid, "SELL", ticker, False, sell_price, sell_qty):
+      delete_order(sell_id)
+      continue
+
+    if buy_qty >= sell_qty:
+      if not check_assets(buy_pid, "BUY", ticker, True, sell_price, sell_qty):
+        delete_market_orders(ticker, "BUY")
+        return
+
+      create_transaction(sell_qty, sell_price * sell_qty, buy_user, buy_pid,
+                         ticker, 'BUY', datetime.now())
+
+      create_transaction(sell_qty, sell_price * sell_qty, sell_user, sell_pid,
+                         ticker, 'SELL', datetime.now())
+
+      # Update the portfolios
+      update_portfolio(buy_pid, ticker, sell_qty)
+      update_portfolio(sell_pid, ticker, -sell_qty)
+
+      if buy_qty == sell_qty:
+        delete_order(buy_id)
+      else:
+        update_order(buy_id, buy_qty-sell_qty)
+      delete_order(sell_id)
+    
+    else:
+      if not check_assets(buy_pid, "BUY", ticker, True, sell_price, buy_qty):
+        delete_market_orders(ticker, "BUY")
+        return
+      
+      create_transaction(buy_qty, sell_price * buy_qty, buy_user, buy_pid,
+                         ticker, 'BUY', datetime.now())
+      create_transaction(buy_qty, sell_price * buy_qty, sell_user, sell_pid,
+                         ticker, 'SELL', datetime.now())
+
+      update_portfolio(buy_pid, ticker, buy_qty)
+      update_portfolio(sell_pid, ticker, -buy_qty)
+
+      update_order(sell_id, sell_qty-buy_qty)
+      delete_order(buy_id)
+      
+    g.conn.execute("UPDATE FROM Stock SET market_price = %s WHERE ticker = %s;", sell_price, ticker)
+  
+  return True
+
+def update_portfolio(pid, ticker, quantity):
+  cursor_stocks = g.conn.execute("SELECT  quantity FROM Portfolio_Stock WHERE " + \
+                                 "portfolio = %s and ticker = %s;", pid, ticker)
+  if cursor_stocks.rowcount == 0:
+    if quantity > 0:
+      g.conn.execute("INSERT INTO Portfolio_Stock VALUES (%s, %s, %s);", pid, ticker, quantity)
+  else:
+    for stock in cursor_stocks:
+      newqty = stock['quantity'] + quantity
+      if newqty == 0:
+        g.conn.execute("DELETE FROM Portfolio_Stock WHERE portfolio = %s " + \
+                       "AND ticker = %s;", pid, ticker)
+        return
+      g.conn.execute("UPDATE FROM Portfolio_Stock SET quantity = %s WHERE portfolio = %s and stock = %s;",
+                      newqty, pid, ticker)
+
+def update_order(oid, qty):
+  g.conn.execute("UPDATE FROM Trade_Order SET quantity = %s WHERE id = %s;",
+                 qty, oid) 
+
+def delete_order(oid):
+  g.conn.execute("DELETE FROM Trade_Order WHERE id = %s;", oid)
+
+def delete_market_orders(ticker, otype):
+  g.conn.execute("DELETE FROM Trade_Order WHERE market = TRUE AND stock " + \
+               "= %s AND type = %s", ticker, otype)
+
+def create_transaction(quantity, total_value, trader, portfolio, stock, ttype, timestamp):
+  try:
+    g.conn.execute("INSERT INTO Transaction(quantity, total_value, trader" + \
+                   ", portfolio, stock, type, timestamp) VALUES (%s,%s," + \
+                   "%s,%s,%s,%s,%s);", quantity, total_value, trader, portfolio,
+                   stock, ttype, timestamp)
+    return True
+  except:
+    return False
 
 if __name__ == "__main__":
   import click
