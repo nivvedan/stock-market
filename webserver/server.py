@@ -309,7 +309,6 @@ def exec_buy_mt(ticker, cursor_buy_mt, cursor_sell):
     buy_id = int(buy_order['id'])
     buy_user = buy_order['trader'].strip()
     buy_pid = int(buy_order['portfolio'])
-    buy_price = float(buy_order['unit_price'].replace(',', "")[1:])
     buy_qty = int(buy_order['quantity'])
 
   if cursor_sell.rowcount == 0:
@@ -378,7 +377,6 @@ def exec_sell_mt(ticker, cursor_sell_mt, cursor_buy):
     sell_id = int(sell_order['id'])
     sell_user = sell_order['trader'].strip()
     sell_pid = int(sell_order['portfolio'])
-    sell_price = float(sell_order['unit_price'].replace(',', "")[1:])
     sell_qty = int(sell_order['quantity'])
 
   if cursor_buy.rowcount == 0:
