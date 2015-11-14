@@ -460,7 +460,6 @@ def exec_sell_mt(ticker, cursor_sell_mt, cursor_buy):
       delete_order(sell_id)
       
     g.conn.execute("UPDATE FROM Stock SET market_price = %s WHERE ticker = %s;", buy_price, ticker)
-  
   return True
 
 def update_portfolio(pid, ticker, quantity):
