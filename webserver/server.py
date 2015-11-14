@@ -306,11 +306,11 @@ def select_price_orders(ticker, otype):
 def exec_buy_mt(ticker, cursor_buy_mt, cursor_sell):
 
   for buy_order in cursor_buy_mt:
-    buy_id = buy_order['id']
+    buy_id = int(buy_order['id'])
     buy_user = buy_order['trader'].strip()
-    buy_pid = buy_order['portfolio']
-    buy_price = buy_order['unit_price']
-    buy_qty = buy_order['quantity']
+    buy_pid = int(buy_order['portfolio'])
+    buy_price = float(buy_order['unit_price'].replace(',', "")[1:])
+    buy_qty = int(buy_order['quantity'])
 
   if cursor_sell.rowcount == 0:
     delete_market_orders(ticker, "BUY")
@@ -321,11 +321,11 @@ def exec_buy_mt(ticker, cursor_buy_mt, cursor_sell):
     if cursor_buy_mt.rowcount == 0:
       return
 
-    sell_id = sell_order['id']
+    sell_id = int(sell_order['id'])
     sell_user = sell_order['trader'].strip()
-    sell_pid = sell_order['portfolio']
-    sell_price = sell_order['unit_price']
-    sell_qty = sell_order['quantity']
+    sell_pid = int(sell_order['portfolio'])
+    sell_price = float(sell_order['unit_price'].replace(',', "")[1:])
+    sell_qty = int(sell_order['quantity'])
 
     if not check_assets(sell_pid, "SELL", ticker, False, sell_price, sell_qty):
       delete_order(sell_id)
@@ -375,11 +375,11 @@ def exec_buy_mt(ticker, cursor_buy_mt, cursor_sell):
 def exec_sell_mt(ticker, cursor_sell_mt, cursor_buy):
 
   for sell_order in cursor_sell_mt:
-    sell_id = sell_order['id']
+    sell_id = int(sell_order['id'])
     sell_user = sell_order['trader'].strip()
-    sell_pid = sell_order['portfolio']
-    sell_price = sell_order['unit_price']
-    sell_qty = sell_order['quantity']
+    sell_pid = int(sell_order['portfolio'])
+    sell_price = float(sell_order['unit_price'].replace(',', "")[1:])
+    sell_qty = int(sell_order['quantity'])
 
   if cursor_buy.rowcount == 0:
     delete_market_orders(ticker, "SELL")
@@ -390,11 +390,11 @@ def exec_sell_mt(ticker, cursor_sell_mt, cursor_buy):
     if cursor_sell_mt.rowcount == 0:
       return
 
-    buy_id = buy_order['id']
+    buy_id = int(buy_order['id'])
     buy_user = buy_order['trader'].strip()
-    buy_pid = buy_order['portfolio']
-    buy_price = buy_order['unit_price']
-    buy_qty = buy_order['quantity']
+    buy_pid = int(buy_order['portfolio'])
+    buy_price = float(buy_order['unit_price'].replace(',', "")[1:])
+    buy_qty = int(buy_order['quantity'])
 
     if not check_assets(buy_pid, "BUY", ticker, False, buy_price, buy_qty):
       delete_order(buy_id)
@@ -449,19 +449,19 @@ def exec_price_orders(ticker):
       return
 
     for buy_order in cursor_buy:
-      buy_id = buy_order['id']
+      buy_id = int(buy_order['id'])
       buy_user = buy_order['trader'].strip()
-      buy_pid = buy_order['portfolio']
-      buy_price = buy_order['unit_price']
-      buy_qty = buy_order['quantity']
+      buy_pid = int(buy_order['portfolio'])
+      buy_price = float(buy_order['unit_price'].replace(',', "")[1:])
+      buy_qty = int(buy_order['quantity'])
       break
 
     for sell_order in cursor_sell:
-      sell_id = sell_order['id']
+      sell_id = int(sell_order['id'])
       sell_user = sell_order['trader'].strip()
-      sell_pid = sell_order['portfolio']
-      sell_price = sell_order['unit_price']
-      sell_qty = sell_order['quantity']
+      sell_pid = int(sell_order['portfolio'])
+      sell_price = float(sell_order['unit_price'].replace(',', "")[1:])
+      sell_qty = int(sell_order['quantity'])
       break
 
     if not check_assets(sell_pid, "SELL", ticker, False, sell_price, sell_qty):
