@@ -2,7 +2,7 @@
   <style>
     body { 
       font-size: 15pt;
-      font-family: arial;
+      font-family: 'Old Standard TT', serif;
     }
 
     table {
@@ -59,6 +59,11 @@
       </td>
       <td>
         <table id = "t01">
+          <tr>
+            <th>pid</th>
+            <th>quantity</th>
+            <th>unit price</th>
+          </tr>
         {% for order in sellorders %}
           <tr>
             <td>{{order['pid']}}</td>
