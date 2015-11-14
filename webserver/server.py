@@ -95,7 +95,7 @@ def index():
   # DEBUG: this is debugging code to see what request looks like
   # print(request.args)
 
-  cursor = g.conn.execute("SELECT pid, name FROM portfolio")
+  cursor = g.conn.execute("SELECT pid, name FROM portfolio ORDER BY pid;")
   pids = []
   names = []
   for result in cursor:
@@ -118,11 +118,13 @@ def show_portfolio(pid):
   if not isinstance(pid, int):
     return render_template('404.html'), 404
 
-  cursor = g.conn.execute("SELECT pid, name FROM portfolio WHERE pid = %s;", pid)
+  cursor = g.conn.execute("SELECT pid, name, cash FROM portfolio WHERE pid" + \
+                          " = %s;", pid)
   if cursor.rowcount == 0:
     return render_template('404.html'), 404
   for result in cursor:
-    portfolio = {'pid': result['pid'], 'name': result['name'].strip()}
+    portfolio = {'pid': result['pid'], 'name': result['name'].strip(),
+                 'cash': result['cash']}
 
   errors = []
 
@@ -304,27 +306,30 @@ def select_price_orders(ticker, otype):
                         "unit_price " + ordering + ";", ticker, otype)
 
 def exec_buy_mt(ticker, cursor_buy_mt, cursor_sell):
-
-  for buy_order in cursor_buy_mt:
-    buy_id = int(buy_order['id'])
-    buy_user = buy_order['trader'].strip()
-    buy_pid = int(buy_order['portfolio'])
-    buy_qty = int(buy_order['quantity'])
-
-  if cursor_sell.rowcount == 0:
-    delete_market_orders(ticker, "BUY")
-    return
-
-  for sell_order in cursor_sell:
+  while True:
     cursor_buy_mt = select_market_orders(ticker, "BUY")
+    cursor_sell = select_price_orders(ticker, "SELL")
+
+    if cursor_sell.rowcount == 0:
+      delete_market_orders(ticker, "BUY")
+      return
+
     if cursor_buy_mt.rowcount == 0:
       return
 
-    sell_id = int(sell_order['id'])
-    sell_user = sell_order['trader'].strip()
-    sell_pid = int(sell_order['portfolio'])
-    sell_price = float(sell_order['unit_price'].replace(',', "")[1:])
-    sell_qty = int(sell_order['quantity'])
+    for buy_order in cursor_buy_mt:
+      buy_id = int(buy_order['id'])
+      buy_user = buy_order['trader'].strip()
+      buy_pid = int(buy_order['portfolio'])
+      buy_qty = int(buy_order['quantity'])
+
+    for sell_order in cursor_sell:
+      sell_id = int(sell_order['id'])
+      sell_user = sell_order['trader'].strip()
+      sell_pid = int(sell_order['portfolio'])
+      sell_price = float(sell_order['unit_price'].replace(',', "")[1:])
+      sell_qty = int(sell_order['quantity'])
+      break
 
     if not check_assets(sell_pid, "SELL", ticker, False, sell_price, sell_qty):
       delete_order(sell_id)
@@ -378,27 +383,30 @@ def exec_buy_mt(ticker, cursor_buy_mt, cursor_sell):
   return True
 
 def exec_sell_mt(ticker, cursor_sell_mt, cursor_buy):
-
-  for sell_order in cursor_sell_mt:
-    sell_id = int(sell_order['id'])
-    sell_user = sell_order['trader'].strip()
-    sell_pid = int(sell_order['portfolio'])
-    sell_qty = int(sell_order['quantity'])
-
-  if cursor_buy.rowcount == 0:
-    delete_market_orders(ticker, "SELL")
-    return
-
-  for buy_order in cursor_buy:
+  while True:
+    cursor_buy = select_price_orders(ticker, "BUY")
     cursor_sell_mt = select_market_orders(ticker, "SELL")
+
+    if cursor_buy.rowcount == 0:
+      delete_market_orders(ticker, "SELL")
+      return
+
     if cursor_sell_mt.rowcount == 0:
       return
 
-    buy_id = int(buy_order['id'])
-    buy_user = buy_order['trader'].strip()
-    buy_pid = int(buy_order['portfolio'])
-    buy_price = float(buy_order['unit_price'].replace(',', "")[1:])
-    buy_qty = int(buy_order['quantity'])
+    for sell_order in cursor_sell_mt:
+      sell_id = int(sell_order['id'])
+      sell_user = sell_order['trader'].strip()
+      sell_pid = int(sell_order['portfolio'])
+      sell_qty = int(sell_order['quantity'])
+
+    for buy_order in cursor_buy:
+      buy_id = int(buy_order['id'])
+      buy_user = buy_order['trader'].strip()
+      buy_pid = int(buy_order['portfolio'])
+      buy_price = float(buy_order['unit_price'].replace(',', "")[1:])
+      buy_qty = int(buy_order['quantity'])
+      break
 
     if not check_assets(buy_pid, "BUY", ticker, False, buy_price, buy_qty):
       delete_order(buy_id)
