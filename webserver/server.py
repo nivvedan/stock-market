@@ -2,7 +2,7 @@
 
 """
 Columbia W4111 Intro to databases
-Example webserver
+Stock Market webserver
 
 To run locally
 
@@ -14,7 +14,8 @@ Go to http://localhost:8111 in your browser
 A debugger such as "pdb" may be helpful for debugging.
 Read about it online.
 
-eugene wu 2015
+Kunal Mahajan
+Nivvedan Senthamil Selvan
 """
 
 import os
