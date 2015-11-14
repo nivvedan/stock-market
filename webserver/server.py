@@ -271,11 +271,11 @@ def show_stock(ticker):
 
 def process_orders(ticker):
   # market orders
-  cursor_sell_mt = g.conn.execute("SELECT id, portfolio, quantity, unit_price FROM Trade_Order WHERE stock = %s AND type = SELL AND market = TRUE ORDER BY price ASC;", ticker)
-  cursor_buy_mt = g.conn.execute("SELECT id, portfolio, quantity, unit_price FROM Trade_Order WHERE stock = %s AND type = BUY AND market = TRUE ORDER BY price DESC;", ticker)
+  cursor_sell_mt = g.conn.execute("SELECT * FROM Trade_Order WHERE stock = %s AND type = SELL AND market = TRUE ORDER BY price ASC;", ticker)
+  cursor_buy_mt = g.conn.execute("SELECT * FROM Trade_Order WHERE stock = %s AND type = BUY AND market = TRUE ORDER BY price DESC;", ticker)
   # normal orders
-  cursor_sell = g.conn.execute("SELECT id, portfolio, quantity, unit_price FROM Trade_Order WHERE stock = %s AND type = SELL ORDER BY price ASC;", ticker)
-  cursor_buy = g.conn.execute("SELECT id, portfolio, quantity, unit_price FROM Trade_Order WHERE stock = %s AND type = BUY ORDER BY price DESC;", ticker)
+  cursor_sell = g.conn.execute("SELECT * FROM Trade_Order WHERE stock = %s AND type = SELL ORDER BY price ASC;", ticker)
+  cursor_buy = g.conn.execute("SELECT * FROM Trade_Order WHERE stock = %s AND type = BUY ORDER BY price DESC;", ticker)
   
   if cursor_sell_mt.rowcount != 0 and cursor_buy.rowcount != 0:
     exec_sell_mt(ticker, cursor_sell_mt, cursor_buy)
