@@ -345,6 +345,9 @@ def exec_buy_mt(ticker, cursor_buy_mt, cursor_sell):
       update_portfolio(buy_pid, ticker, sell_qty)
       update_portfolio(sell_pid, ticker, -sell_qty)
 
+      update_cash(buy_pid, -sell_price * sell_qty)
+      update_cash(sell_pid, sell_price * sell_qty)
+
       if buy_qty == sell_qty:
         delete_order(buy_id)
       else:
@@ -363,6 +366,9 @@ def exec_buy_mt(ticker, cursor_buy_mt, cursor_sell):
 
       update_portfolio(buy_pid, ticker, buy_qty)
       update_portfolio(sell_pid, ticker, -buy_qty)
+
+      update_cash(buy_pid, -sell_price * buy_qty)
+      update_cash(sell_pid, sell_price * buy_qty)
 
       update_order(sell_id, sell_qty-buy_qty)
       delete_order(buy_id)
@@ -413,6 +419,9 @@ def exec_sell_mt(ticker, cursor_sell_mt, cursor_buy):
       update_portfolio(sell_pid, ticker, buy_qty)
       update_portfolio(buy_pid, ticker, -buy_qty)
 
+      update_cash(buy_pid, -buy_price * buy_qty)
+      update_cash(sell_pid, buy_price * buy_qty)
+
       if buy_qty == sell_qty:
         delete_order(sell_id)
       else:
@@ -431,6 +440,9 @@ def exec_sell_mt(ticker, cursor_sell_mt, cursor_buy):
 
       update_portfolio(sell_pid, ticker, sell_qty)
       update_portfolio(buy_pid, ticker, -sell_qty)
+
+      update_cash(buy_pid, -buy_price * sell_qty)
+      update_cash(sell_pid, buy_price * sell_qty)
 
       update_order(buy_id, buy_qty-sell_qty)
       delete_order(sell_id)
@@ -484,6 +496,9 @@ def exec_price_orders(ticker):
       update_portfolio(buy_pid, ticker, sell_qty)
       update_portfolio(sell_pid, ticker, -sell_qty)
 
+      update_cash(buy_pid, -sell_price * sell_qty)
+      update_cash(sell_pid, sell_price * sell_qty)
+
       if buy_qty == sell_qty:
         delete_order(buy_id)
       else:
@@ -499,16 +514,29 @@ def exec_price_orders(ticker):
       update_portfolio(buy_pid, ticker, buy_qty)
       update_portfolio(sell_pid, ticker, -buy_qty)
 
+      update_cash(buy_pid, -sell_price * buy_qty)
+      update_cash(sell_pid, sell_price * buy_qty)
+
       update_order(sell_id, sell_qty-buy_qty)
       delete_order(buy_id)
       
     g.conn.execute("UPDATE Stock SET market_price = %s WHERE ticker = %s;", sell_price, ticker)
 
+def update_cash(pid, cash):
+  cursor_stocks = g.conn.execute("SELECT cash FROM Portfolio WHERE " + \
+                                 "pid = %s;", pid)
+  for portfolio in cursor_stocks:
+    oldcash = float(portfolio['cash'].replace(',', "")[1:])
+    newcash = cash + oldcash
+
+  g.conn.execute("UPDATE Portfolio SET cash = %s WHERE pid = %s;",
+                  newcash, pid)
+
+
 def update_portfolio(pid, ticker, quantity):
   cursor_stocks = g.conn.execute("SELECT  quantity FROM Portfolio_Stock WHERE " + \
                                  "portfolio = %s and stock = %s;", pid, ticker)
   if cursor_stocks.rowcount == 0:
-    print "NOT"
     if quantity > 0:
       g.conn.execute("INSERT INTO Portfolio_Stock VALUES (%s, %s, %s);", pid, ticker, quantity)
   else:
@@ -518,10 +546,6 @@ def update_portfolio(pid, ticker, quantity):
         g.conn.execute("DELETE FROM Portfolio_Stock WHERE portfolio = %s " + \
                        "AND stock = %s;", pid, ticker)
         return
-      print "HERE"
-      print newqty
-      print ticker
-      print pid
       g.conn.execute("UPDATE Portfolio_Stock SET quantity = %s WHERE portfolio = %s and stock = %s;",
                       newqty, pid, ticker)
 
