@@ -12,7 +12,7 @@ from sqlalchemy.pool import NullPool
 from flask import Flask, request, render_template, g, redirect, Response
 
 # execute market buy order
-def exec_buy_mt(cursor_buy_mt, cursor_sell):
+def exec_buy_mt(ticker, cursor_buy_mt, cursor_sell):
 
 	buy_price = 0
 	buy_qty = 0
@@ -38,13 +38,16 @@ def exec_buy_mt(cursor_buy_mt, cursor_sell):
 
 	qty_diff = buy_qty - sell_qty
 	if qty_diff >= 0:
-		g.conn.execute("INSERT INTO Portfolio_Stock VALUES pid = %s;", sell_order['pid'], )
+		g.conn.execute("UPDATE FROM Stock SET market_price = %s WHERE ticker = %s;", sell_price, ticker)
 	else:
+		#g.conn.execute("DELETE FROM Trade_Order WHERE id = %s;", buy_id)
+		g.conn.execute("UPDATE FROM Stock SET market_price = %s WHERE ticker = %s;", sell_price, ticker)
+	return True
+	
 
-
-	g.conn.execute("DELETE FROM Trade_Order WHERE id = %s;", buy_id)
-
-
+# execute market buy order
+def exec_sell_mt(ticker, cursor_sell_mt, cursor_buy):
+	return True
 
 # # execute market buy order
 # def exec_buy_mt(cursor_buy_mt, cursor_sell):
