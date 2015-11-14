@@ -174,23 +174,23 @@ def show_portfolio(pid):
   else:
     cprice = None
 
-  try:
-    if not check_assets(pid, request.form['order'], ticker,
-                        request.form['price'] == 'market', cprice, quantity):
-      errors.append("You don't have sufficient funds / stocks to execute " + \
-                    "this order.")
-      return display_stocks(pid, portfolio, errors)
+  # try:
+  if not check_assets(pid, request.form['order'], ticker,
+                      request.form['price'] == 'market', cprice, quantity):
+    errors.append("You don't have sufficient funds / stocks to execute " + \
+                  "this order.")
+    return display_stocks(pid, portfolio, errors)
 
-    cursor = g.conn.execute("INSERT INTO Trade_Order(type, stock, market, " + \
-                            "unit_price, quantity, trader, portfolio, " + \
-                            "timestamp) VALUES(%s, %s, %s, %s, %s, %s, %s, " + \
-                            "%s);", request.form['order'], ticker,
-                            request.form['price'] == 'market', cprice, quantity,
-                            username, pid, datetime.now())
-    process_orders(ticker)
-  except:
-    errors.append("Invalid Order.")
-    return display_stocks(pid, portfolio, errors) 
+  cursor = g.conn.execute("INSERT INTO Trade_Order(type, stock, market, " + \
+                          "unit_price, quantity, trader, portfolio, " + \
+                          "timestamp) VALUES(%s, %s, %s, %s, %s, %s, %s, " + \
+                          "%s);", request.form['order'], ticker,
+                          request.form['price'] == 'market', cprice, quantity,
+                          username, pid, datetime.now())
+  process_orders(ticker)
+  # except:
+  #   errors.append("Invalid Order.")
+  #   return display_stocks(pid, portfolio, errors) 
 
   return display_stocks(pid, portfolio, errors)
 
@@ -368,7 +368,7 @@ def exec_buy_mt(ticker, cursor_buy_mt, cursor_sell):
       update_order(sell_id, sell_qty-buy_qty)
       delete_order(buy_id)
       
-    g.conn.execute("UPDATE FROM Stock SET market_price = %s WHERE ticker = %s;", sell_price, ticker)
+    g.conn.execute("UPDATE Stock SET market_price = %s WHERE ticker = %s;", sell_price, ticker)
   
   return True
 
@@ -381,7 +381,7 @@ def exec_sell_mt(ticker, cursor_sell_mt, cursor_buy):
     sell_price = sell_order['unit_price']
     sell_qty = sell_order['quantity']
 
-  if cursor_sell.rowcount == 0:
+  if cursor_buy.rowcount == 0:
     delete_market_orders(ticker, "SELL")
     return
 
@@ -437,7 +437,7 @@ def exec_sell_mt(ticker, cursor_sell_mt, cursor_buy):
       update_order(buy_id, buy_qty-sell_qty)
       delete_order(sell_id)
       
-    g.conn.execute("UPDATE FROM Stock SET market_price = %s WHERE ticker = %s;", buy_price, ticker)
+    g.conn.execute("UPDATE Stock SET market_price = %s WHERE ticker = %s;", buy_price, ticker)
   return True
 
 def exec_price_orders(ticker):
@@ -504,12 +504,13 @@ def exec_price_orders(ticker):
       update_order(sell_id, sell_qty-buy_qty)
       delete_order(buy_id)
       
-    g.conn.execute("UPDATE FROM Stock SET market_price = %s WHERE ticker = %s;", sell_price, ticker)
+    g.conn.execute("UPDATE Stock SET market_price = %s WHERE ticker = %s;", sell_price, ticker)
 
 def update_portfolio(pid, ticker, quantity):
   cursor_stocks = g.conn.execute("SELECT  quantity FROM Portfolio_Stock WHERE " + \
-                                 "portfolio = %s and ticker = %s;", pid, ticker)
+                                 "portfolio = %s and stock = %s;", pid, ticker)
   if cursor_stocks.rowcount == 0:
+    print "NOT"
     if quantity > 0:
       g.conn.execute("INSERT INTO Portfolio_Stock VALUES (%s, %s, %s);", pid, ticker, quantity)
   else:
@@ -517,13 +518,17 @@ def update_portfolio(pid, ticker, quantity):
       newqty = stock['quantity'] + quantity
       if newqty == 0:
         g.conn.execute("DELETE FROM Portfolio_Stock WHERE portfolio = %s " + \
-                       "AND ticker = %s;", pid, ticker)
+                       "AND stock = %s;", pid, ticker)
         return
-      g.conn.execute("UPDATE FROM Portfolio_Stock SET quantity = %s WHERE portfolio = %s and stock = %s;",
+      print "HERE"
+      print newqty
+      print ticker
+      print pid
+      g.conn.execute("UPDATE Portfolio_Stock SET quantity = %s WHERE portfolio = %s and stock = %s;",
                       newqty, pid, ticker)
 
 def update_order(oid, qty):
-  g.conn.execute("UPDATE FROM Trade_Order SET quantity = %s WHERE id = %s;",
+  g.conn.execute("UPDATE Trade_Order SET quantity = %s WHERE id = %s;",
                  qty, oid) 
 
 def delete_order(oid):
@@ -534,14 +539,11 @@ def delete_market_orders(ticker, otype):
                "= %s AND type = %s", ticker, otype)
 
 def create_transaction(quantity, total_value, trader, portfolio, stock, ttype, timestamp):
-  try:
     g.conn.execute("INSERT INTO Transaction(quantity, total_value, trader" + \
                    ", portfolio, stock, type, timestamp) VALUES (%s,%s," + \
                    "%s,%s,%s,%s,%s);", quantity, total_value, trader, portfolio,
                    stock, ttype, timestamp)
     return True
-  except:
-    return False
 
 if __name__ == "__main__":
   import click
