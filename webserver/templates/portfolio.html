@@ -1,95 +1,125 @@
 <html>
-  <style>
-    body { 
-      font-size: 15pt;
-      font-family: arial;
-    }
+  <head>
+    <title>Portfolio | Stock market</title>
+    <link href='https://fonts.googleapis.com/css?family=Old+Standard+TT' rel='stylesheet' type='text/css'>
+    <style>
+      body { 
+        text-align: center;
+        font-family: 'Old Standard TT', serif;
+      }
 
-    table, th, td {
-      border: 1px solid black;
-      border-collapse: collapse;
-    }
+      table#portfolio th, table#portfolio td {
+        border: 1px solid black;
+        border-collapse: collapse;
+      }
 
-    th, td {
-      padding: 5px;
-      text-align: left;
-    }
+      th, td {
+        padding: 5px;
+        text-align: left;
+      }
 
-    table tr:nth-child(even) {
-      background-color: #eee;
-    }
+      #portfolio tr:nth-child(even) {
+        background-color: #eee;
+      }
 
-    table tr:nth-child(odd) {
-      background-color:#fff;
-    }
-    
-    table th  {
-      background-color: black;
-      color: white;
-    }
-    
-  </style>
+      #portfolio tr:nth-child(odd) {
+        background-color:#fff;
+      }
+      
+      #portfolio th  {
+        background-color: black;
+        color: white;
+      }
 
+      table {
+        margin: 0px auto;
+      }
 
-<body>
-  <h1>Portfolio {{portfolio['pid']}} : {{portfolio['name']}}</h1>
+      #backfooter {
+        margin-top: 20px;
+      }
+      
+    </style>
+  </head>
 
-  <div>
-    <table>
-    <tr>
-      <th>Stock</th>
-      <th>Company</th>
-      <th>Quantity</th>
-      <th>Market Price</th>
-    </tr>
-    {% for stock in stocks %}
+  <body>
+    <h1>Portfolio {{portfolio['pid']}} : {{portfolio['name']}}</h1>
+
+    <div>
+      <table id="portfolio">
       <tr>
-        <td><a href="/stock/{{stock['ticker']}}/"}}>{{stock['ticker']}}</a></td>
-        <td>{{stock['company_name']}}</td>
-        <td>{{stock['quantity']}}</td>
-        <td>{{stock['market_price']}}</td>
+        <th>Stock</th>
+        <th>Company</th>
+        <th>Quantity</th>
+        <th>Market Price</th>
       </tr>
-    {% endfor %}
-    </table>
-  </div>
+      {% for stock in stocks %}
+        <tr>
+          <td><a href="/stock/{{stock['ticker']}}/"}}>{{stock['ticker']}}</a></td>
+          <td>{{stock['company_name']}}</td>
+          <td>{{stock['quantity']}}</td>
+          <td>{{stock['market_price']}}</td>
+        </tr>
+      {% endfor %}
+      </table>
+    </div>
 
-  <div>
-    {% for error in errors %}
-      <h1 style="color:red"> {{error}} </h1>
-    {% endfor %}
+    <div>
+      <h3>Execute Trade</he>
+    </div>
 
-  </div>
-  
+    <div>
+      {% for error in errors %}
+        <h4 style="color:red"> {{error}} </h4>
+      {% endfor %}
 
-  <div>
-    <form action="" method="post">
-      <input type="radio" name="order" value="BUY" checked>Buy
-      <input type="radio" name="order" value="SELL">Sell
-      <br>
-      Username:<br>
-      <input type="text" name="username">
-      <br>
-      Password:<br>
-      <input type="password" name="password">
-      <br>
-      Stock Ticker:<br>
-      <input type="text" name="ticker">
-      <br>
-      Quantity:<br>
-      <input type="number" name="quantity">
-      <br>
-      Price: <br>
-      <input type="radio" name="price" value="market" checked>Market Price
-      <br>
-      <input type="radio" name="price" value="custom">Custom Price
-      <br>
-      Enter custom price: 
-      <input type="number" step = "0.01" name="cprice">
-      <br>
-      <input type="submit" value="Submit">
-    </form>
-  </div>
-</body>
+    </div>
+    
+
+    <div id="formdiv">
+      <form action="" method="post">
+        <table>
+          <tr>
+            <td style="text-align: right;"><input type="radio" name="order" value="BUY" checked></td>
+            <td>Buy</td>
+            <td><input type="radio" name="order" value="SELL"></td>
+            <td>Sell</td>
+          </tr>
+          <tr>
+            <td>Username:</td>
+            <td><input type="text" name="username"></td>
+          </tr>
+          <tr>
+            <td>Password:</td>
+            <td><input type="password" name="password"></td>
+          </tr>
+          <tr>
+            <td>Stock Ticker:</td>
+            <td><input type="text" name="ticker"></td>
+          </tr>
+          <tr>
+            <td>Quantity:</td>
+            <td><input type="number" name="quantity"></td>
+          </tr>
+          <tr>
+            <td style="text-align: right;"><input type="radio" name="price" value="market" checked></td>
+            <td>Market Order</td>
+            <td><input type="radio" name="price" value="custom"></td>
+            <td>Price Order</td>
+          </tr>
+          <tr>
+            <td>Order price:</td>
+            <td><input type="number" step = "0.01" name="cprice"></td>
+          </tr>
+        <table>
+        <input type="submit" value="Submit">
+      </form>
+    </div>
+
+    <div id="backfooter">
+      <a href="/">Back to all Portfolios</a>
+    </div>
+  </body>
 
 
 </html>
