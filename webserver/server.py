@@ -28,20 +28,8 @@ import marketorders
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, template_folder=tmpl_dir)
 
+# Prompts for the password from the user and connects to the database.
 
-#
-# The following uses the sqlite3 database test.db -- you can use this for debugging purposes
-# However for the project you will need to connect to your Part 2 database in order to use the
-# data
-#
-# XXX: The URI should be in the format of: 
-#
-#     postgresql://USER:PASSWORD@w4111db1.cloudapp.net:5432/proj1part2
-#
-# For example, if you had username ewu2493, password foobar, then the following line would be:
-#
-#     DATABASEURI = "postgresql://ewu2493:foobar@w4111db1.cloudapp.net:5432/proj1part2"
-#
 password = input("Password for ns2984: ")
 DATABASEURI = "postgresql://ns2984:" + str(password) + "@w4111db1.cloudapp.net:5432/proj1part2"
 
@@ -50,34 +38,6 @@ DATABASEURI = "postgresql://ns2984:" + str(password) + "@w4111db1.cloudapp.net:5
 # This line creates a database engine that knows how to connect to the URI above
 #
 engine = create_engine(DATABASEURI)
-
-
-#
-# START SQLITE SETUP CODE
-#
-# after these statements run, you should see a file test.db in your webserver/ directory
-# this is a sqlite database that you can query like psql typing in the shell command line:
-# 
-#     sqlite3 test.db
-#
-# The following sqlite3 commands may be useful:
-# 
-#     .tables               -- will list the tables in the database
-#     .schema <tablename>   -- print CREATE TABLE statement for table
-# 
-# The setup code should be deleted once you switch to using the Part 2 postgresql database
-#
-# engine.execute("""DROP TABLE IF EXISTS test;""")
-# engine.execute("""CREATE TABLE IF NOT EXISTS test (
-#   id serial,
-#   name text
-# );""")
-# engine.execute("""INSERT INTO test(name) VALUES ('grace hopper'), ('alan turing'), ('ada lovelace');""")
-#
-# END SQLITE SETUP CODE
-#
-
-
 
 @app.before_request
 def before_request():
@@ -135,47 +95,15 @@ def index():
   # DEBUG: this is debugging code to see what request looks like
   # print(request.args)
 
-
-  #
-  # example of a database query
-  #
   cursor = g.conn.execute("SELECT pid, name FROM portfolio")
   pids = []
   names = []
   for result in cursor:
-    names.append(result['name'].strip())  # can also be accessed using result[0]
-    pids.append(result['pid'])  # can also be accessed using result[0]
+    names.append(result['name'].strip())
+    pids.append(result['pid'])
   cursor.close()
 
-
-  #
-  # Flask uses Jinja templates, which is an extension to HTML where you can
-  # pass data to a template and dynamically generate HTML based on the data
-  # (you can think of it as simple PHP)
-  # documentation: https://realpython.com/blog/python/primer-on-jinja-templating/
-  #
-  # You can see an example template in templates/index.html
-  #
-  # context are the variables that are passed to the template.
-  # for example, "data" key in the context variable defined below will be 
-  # accessible as a variable in index.html:
-  #
-  #     # will print: [u'grace hopper', u'alan turing', u'ada lovelace']
-  #     <div>{{data}}</div>
-  #     
-  #     # creates a <div> tag for each element in data
-  #     # will print: 
-  #     #
-  #     #   <div>grace hopper</div>
-  #     #   <div>alan turing</div>
-  #     #   <div>ada lovelace</div>
-  #     #
-  #     {% for n in data %}
-  #     <div>{{n}}</div>
-  #     {% endfor %}
-  #
   context = dict(names=names, pids=pids)
-
 
   #
   # render_template looks in the templates/ folder for files.
@@ -183,17 +111,7 @@ def index():
   #
   return render_template("index.html", **context)
 
-#
-# This is an example of a different path.  You can see it at
-# 
-#     localhost:8111/another/
-#
-# notice that the function name is another() rather than index()
-# the functions for each app.route needs to have different names
-#
-# @app.route('/another/', methods=["POST", "GET"])
-# def another():
-#   return render_template("anotherfile.html")
+
 
 @app.route('/portfolio/<int:pid>/', methods=['GET', 'POST'])
 def show_portfolio(pid):
