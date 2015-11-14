@@ -316,8 +316,11 @@ def show_stock(ticker):
 def process_orders(ticker):
   cursor_sell = g.conn.execute("SELECT pid, quantity, unit_price FROM Trade_Order WHERE stock = %s AND type = SELL ORDER BY price ASC;", ticker)
   cursor_buy = g.conn.execute("SELECT pid, quantity, unit_price FROM Trade_Order WHERE stock = %s AND type = BUY ORDER BY price DESC;", ticker)
-  if cursor_sell.rowcount == 0 or cursor_buy == 0:
+  if cursor_sell.rowcount == 0 or cursor_buy.rowcount == 0:
+    # If there is any markey order, remove it
     return True
+
+  # Code for executing market order, if exists
 
   for buy_order in cursor_buy:
     for sell_order in cursor_sell:
