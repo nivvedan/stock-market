@@ -3,6 +3,7 @@
     body { 
       font-size: 15pt;
       font-family: 'Old Standard TT', serif;
+      text-align: center;
     }
 
     table {
@@ -44,9 +45,9 @@
       <td>
         <table id = "t01">
           <tr>
-            <th>pid</th>
-            <th>quantity</th>
-            <th>unit price</th>
+            <th>Portfolio</th>
+            <th>Quantity</th>
+            <th>Price</th>
           </tr>
         {% for order in buyorders %}
           <tr>
@@ -60,9 +61,9 @@
       <td>
         <table id = "t01">
           <tr>
-            <th>pid</th>
-            <th>quantity</th>
-            <th>unit price</th>
+            <th>Portfolio</th>
+            <th>Quantity</th>
+            <th>Price</th>
           </tr>
         {% for order in sellorders %}
           <tr>

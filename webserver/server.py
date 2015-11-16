@@ -176,23 +176,30 @@ def show_portfolio(pid):
   else:
     cprice = None
 
-  # try:
-  if not check_assets(pid, request.form['order'], ticker,
-                      request.form['price'] == 'market', cprice, quantity):
-    errors.append("You don't have sufficient funds / stocks to execute " + \
-                  "this order.")
-    return display_stocks(pid, portfolio, errors)
+  try:
+    if not check_assets(pid, request.form['order'], ticker,
+                        request.form['price'] == 'market', cprice, quantity):
+      errors.append("You don't have sufficient funds / stocks to execute " + \
+                    "this order.")
+      return display_stocks(pid, portfolio, errors)
 
-  cursor = g.conn.execute("INSERT INTO Trade_Order(type, stock, market, " + \
-                          "unit_price, quantity, trader, portfolio, " + \
-                          "timestamp) VALUES(%s, %s, %s, %s, %s, %s, %s, " + \
-                          "%s);", request.form['order'], ticker,
-                          request.form['price'] == 'market', cprice, quantity,
-                          username, pid, datetime.now())
-  process_orders(ticker)
-  # except:
-  #   errors.append("Invalid Order.")
-  #   return display_stocks(pid, portfolio, errors) 
+    cursor = g.conn.execute("INSERT INTO Trade_Order(type, stock, market, " + \
+                            "unit_price, quantity, trader, portfolio, " + \
+                            "timestamp) VALUES(%s, %s, %s, %s, %s, %s, %s, " + \
+                            "%s);", request.form['order'], ticker,
+                            request.form['price'] == 'market', cprice, quantity,
+                            username, pid, datetime.now())
+    process_orders(ticker)
+    cursor = g.conn.execute("SELECT pid, name, cash FROM portfolio WHERE pid" + \
+                            " = %s;", pid)
+    if cursor.rowcount == 0:
+      return render_template('404.html'), 404
+    for result in cursor:
+      portfolio = {'pid': result['pid'], 'name': result['name'].strip(),
+                   'cash': result['cash']}
+  except:
+    errors.append("Invalid Order.")
+    return display_stocks(pid, portfolio, errors) 
 
   return display_stocks(pid, portfolio, errors)
 
