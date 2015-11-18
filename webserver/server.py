@@ -127,52 +127,53 @@ def show_portfolio(pid):
                  'cash': result['cash']}
 
   errors = []
+  success = False
 
   if request.method != "POST":
-    return display_stocks(pid, portfolio, errors)
+    return display_stocks(pid, portfolio, errors, success)
 
   username = request.form['username'].strip()
   password = request.form['password']
   cursor = g.conn.execute("SELECT username FROM Trader WHERE username = %s AND password = %s;", username, password)
   if cursor.rowcount == 0:
     errors.append("Username or password incorrect.")
-    return display_stocks(pid, portfolio, errors)
+    return display_stocks(pid, portfolio, errors, success)
 
   cursor = g.conn.execute("SELECT portfolio FROM Trader_Manages WHERE trader = %s AND portfolio = %s;", username, pid)
   if cursor.rowcount == 0:
     errors.append("Trader not authorized for this Portfolio.")
-    return display_stocks(pid, portfolio, errors)
+    return display_stocks(pid, portfolio, errors, success)
   
   ticker = request.form['ticker'].strip()
   cursor = g.conn.execute("SELECT ticker FROM Stock WHERE ticker = %s;", ticker)
   if cursor.rowcount == 0:
     errors.append("No such Stock Ticker exists in the database.")
-    return display_stocks(pid, portfolio, errors)
+    return display_stocks(pid, portfolio, errors, success)
 
   quantity = request.form['quantity'].strip()
   try:
     quantity = int(quantity)
   except:
     errors.append("Quantity should be an integer.")
-    return display_stocks(pid, portfolio, errors)
+    return display_stocks(pid, portfolio, errors, success)
   if quantity <= 0:
     errors.append("Quantity should be a positive integer.")
-    return display_stocks(pid, portfolio, errors)
+    return display_stocks(pid, portfolio, errors, success)
 
   cprice = request.form['cprice'].strip()
   if not cprice and request.form['price'] == 'custom':
     errors.append("Custom price selected but not specified.")
-    return display_stocks(pid, portfolio, errors)
+    return display_stocks(pid, portfolio, errors, success)
   
   if request.form['price'] == 'custom':
     try:
       cprice = float(cprice)
     except:
       errors.append("Custom price should be a number.")
-      return display_stocks(pid, portfolio, errors)
+      return display_stocks(pid, portfolio, errors, success)
     if cprice < 0:
       errors.append("Custom price cannot be negative.")
-      return display_stocks(pid, portfolio, errors)
+      return display_stocks(pid, portfolio, errors, success)
   else:
     cprice = None
 
@@ -181,7 +182,7 @@ def show_portfolio(pid):
                         request.form['price'] == 'market', cprice, quantity):
       errors.append("You don't have sufficient funds / stocks to execute " + \
                     "this order.")
-      return display_stocks(pid, portfolio, errors)
+      return display_stocks(pid, portfolio, errors, success)
 
     cursor = g.conn.execute("INSERT INTO Trade_Order(type, stock, market, " + \
                             "unit_price, quantity, trader, portfolio, " + \
@@ -197,11 +198,12 @@ def show_portfolio(pid):
     for result in cursor:
       portfolio = {'pid': result['pid'], 'name': result['name'].strip(),
                    'cash': result['cash']}
+    success = True
   except:
     errors.append("Invalid Order.")
-    return display_stocks(pid, portfolio, errors) 
+    return display_stocks(pid, portfolio, errors, success) 
 
-  return display_stocks(pid, portfolio, errors)
+  return display_stocks(pid, portfolio, errors, success)
 
 def check_assets(pid, order, ticker, market, cprice, quantity):
   if order == "BUY":
@@ -232,7 +234,7 @@ def check_assets(pid, order, ticker, market, cprice, quantity):
   return True   
 
 
-def display_stocks(pid, portfolio, errors):
+def display_stocks(pid, portfolio, errors, success):
   cursor = g.conn.execute("SELECT stock, company_name, quantity, market_price FROM StockHoldings " + \
                           "WHERE portfolio = %s;", pid)
   stocks = []
@@ -243,8 +245,10 @@ def display_stocks(pid, portfolio, errors):
     stock['quantity'] = result['quantity']
     stock['market_price'] = result['market_price']
     stocks.append(stock)
-  
-  return render_template("portfolio.html", **dict(stocks=stocks, portfolio=portfolio, errors=errors))
+  if success == True:
+    return render_template("portfolio.html", **dict(stocks=stocks, portfolio=portfolio, errors=errors, success=success))
+  else:
+    return render_template("portfolio.html", **dict(stocks=stocks, portfolio=portfolio, errors=errors, success=success))
 
 @app.route('/stock/<ticker>/')
 def show_stock(ticker):
